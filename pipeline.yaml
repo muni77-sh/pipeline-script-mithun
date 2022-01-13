@@ -4,31 +4,36 @@ node{
     stage("Git Clone"){
         
          git url: 'https://github.com/muni77-sh/java-web-app-docker.git',branch: 'master'
+         
     }
-
+        
     stage('Maven Clean Package'){
         def mavenHome= tool name: "Maven",type: "maven"
          sh "${mavenHome}/bin/mvn clean package"
+        
     }
-
+    
     stage("Build Docker Image"){
         sh "docker build -t bhaskar77/java-web-app-docker:${buildNumber} ."
     }
-
+    
     stage("Docker Login And Push"){
         withCredentials([string(credentialsId: 'DockerHubPwd', variable: 'DockerHubPwd')]) {
             sh "docker login -u bhaskar77 -p ${DockerHubPwd}"
-          }
-      
+         }
+         
         sh "docker push bhaskar77/java-web-app-docker:${buildNumber}"
-    }  
+        
+    }
+
 
     stage("Deploy Application As Docker In Docker Deployment Server"){
-        
-        sshagent(['Docker_Dev2_Server_SSH']) {
-          sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.2.250 docker rm -f javawebappcontainer || true"
-          sh "ssh  -o StrictHostKeyChecking=no ubuntu@172.31.2.250 docker run -d -p 8080:8080 --name javawebappcontainer bhaskar77/java-web-app-docker:${buildNumber}"
-            
+     
+        sshagent(['Docker_Dev_Server_SSH']) {
+          sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.17.31 docker rm -f javawebappcontainer || true"
+          sh "ssh -o StrictHostKeyChecking=no ubuntu@172.31.17.31 docker run -d -p 8080:8080 --name javawebappcontainer bhaskar77/java-web-app-docker:${buildNumber}"      
+    
       }
+        
     }
-}    
+}
